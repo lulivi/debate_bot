@@ -4,13 +4,10 @@
 This bot, created by me (https://telegram.me/luvodovic) is a simple bot who can handle an argument with extremly simple commands:
 
 
-/new: Start a new topic.
-
-/current: Show the current topic.
-
-/end: End the existing topic.
-
-/rules: Show the group rules.
+/new: Start a new topic.<br/>
+/current: Show the current topic.<br/>
+/end: End the existing topic.<br/>
+/rules: Show the group rules.<br/>
 
 
 @debate_bot url -> https://telegram.me/debate_bot
