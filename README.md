@@ -1,7 +1,7 @@
 # Code in Python of @debate_bot
 
 
-This bot, created by me (https://telegram.me/luvodovic) is a simple bot who can manage an argument with extremly simple commands:
+This bot, created by me (https://telegram.me/luvodovic) is a simple bot who can handle an argument with extremly simple commands:
 
 
 /new: Start a new topic.
