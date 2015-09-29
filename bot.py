@@ -9,9 +9,8 @@ import priv.token as tk
 bot = telebot.TeleBot(tk.token()) # Creamos el objeto de nuestro bot.
 import log.logger as log
 
-# Funcion que recibe los mensajes
-def recibe(messages): # Mensajes recibidos
-    for m in messages: # Por cada dato 'm' en el dato 'messages'
+def recibe(messages):
+    for m in messages:
         log.logger(m)
 bot.set_update_listener(recibe) 
 
@@ -19,7 +18,6 @@ bot.set_update_listener(recibe)
 #                            commands
 ###############################################################################
 
-# start mensaje de bienvenida
 @bot.message_handler(commands=['start'])
 def command_start(m):
     cid = m.chat.id
@@ -32,7 +30,6 @@ def command_start(m):
         Espero ser de utilidad.")
 ########################################
 
-# muestra los comandos visibles         
 @bot.message_handler(commands=['help'])
 def command_help(m):
     bot.reply_to(m,"Guardo y doy información acerca de debates.\n\
@@ -42,7 +39,6 @@ def command_help(m):
     ~> Con el comando /rules muestro las normas actuales del grupo.")
 ########################################
 
-# nuevo debate
 @bot.message_handler(commands=['new'])
 def command_new(m):
     pos = m.text.find(" ")
@@ -64,7 +60,6 @@ def command_new(m):
             ~> /current para obtenerlo.")
 ########################################
 
-# debate actual
 @bot.message_handler(commands=['current'])
 def command_current(m):
     actual = get_matter()
@@ -78,7 +73,6 @@ def command_current(m):
         ~> /new para comenzar uno.")
 ########################################
 
-# terminar el debate
 @bot.message_handler(commands=['end'])
 def command_end(m):
     if get_matter() != "":
@@ -96,7 +90,6 @@ def command_end(m):
         ~> /new para comenzar uno.")
 ########################################
 
-# reglas
 @bot.message_handler(commands=['rules'])
 def command_to_rules(m):
     if m.chat.id < 0:
@@ -122,7 +115,7 @@ def get_matter():
         matter = f.read()
     return matter
 
-##### normas.txt #####
+##### rules.txt #####
 def get_normas():
     with open('rules.txt','r') as f:
         normas = f.read()
