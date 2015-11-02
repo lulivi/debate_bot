@@ -1,138 +1,168 @@
+#!/usr/bin/python3 -u
 # -*- coding: utf-8 -*-
 import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
 import time
 import telebot # Librería de la API del bot.
 from telebot import types # Tipos para la API del bot.
-import priv.token as tk
-bot = telebot.TeleBot(tk.token()) # Creamos el objeto de nuestro bot.
-import log.logger as log
 
-def recibe(messages):
-    for m in messages:
-        log.logger(m)
-bot.set_update_listener(recibe) 
+from priv.__init__ import token as tk
+bot = telebot.TeleBot(tk()) # Creamos el objeto de nuestro bot.
 
 ###############################################################################
 #                            commands
 ###############################################################################
 
+# start mensaje de bienvenida
 @bot.message_handler(commands=['start'])
 def command_start(m):
     cid = m.chat.id
     comando = m.text[7:]
-    if comando == 'rules':
-        command_rules(m)
+    if comando == 'reglas':
+        command_reglas(m)
     else:
-        bot.send_message(cid,"¡Hola! Soy Debatebot.\n\
-        Usa el comando /help para que te muestre mis demás comandos.\n\n\
-        Espero ser de utilidad.")
+        bot.send_message(cid,"¡Hola! Soy Debatebot.\nUsa el comando /ayuda para que te muestre mis demás comandos.\n\nEspero ser de utilidad.")
 ########################################
 
-@bot.message_handler(commands=['help'])
-def command_help(m):
-    bot.reply_to(m,"Guardo y doy información acerca de debates.\n\
-    ~> Con el comando /new establezco el nuevo tema de debate.\n\
-    ~> Con el comando /current muestro el tema actual de debate.\n\
-    ~> Con el comando /end termino el debate actual.\n\
-    ~> Con el comando /rules muestro las normas actuales del grupo.")
+# muestra los comandos visibles
+@bot.message_handler(commands=['ayuda'])
+def command_ayuda(m):
+    bot.reply_to(m,"Guardo y doy información acerca de debates.\n/nuevo establezco el nuevo tema de debate.\n/actual muestro el tema actual de debate.\n/fin termino el debate actual.\n/reglas muestro las reglas actuales del grupo.")
 ########################################
 
-@bot.message_handler(commands=['new'])
-def command_new(m):
+# nuevo debat
+@bot.message_handler(commands=['nuevo'])
+def command_nuevo(m):
     pos = m.text.find(" ")
+    cid = m.chat.id
     if pos == -1:
-        bot.send_message(m.chat.id,m.from_user.first_name+", escribe:\n\
-        ~> /new nuevo_tema_de_debate")
+        bot.send_message(cid,m.from_user.first_name+", escribe:\n/nuevo nuevo_tema_de_debate")
     else:
-        if get_matter() == "":
-            set_matter(m.text[5:])
-            set_matter_id(m)
-            bot.send_message(m.chat.id,"El tema actual se ha guardado \
-            con éxito, "+m.from_user.first_name+".\n\
-            ~> /end para terminarlo.\n\
-            ~> /current para obtenerlo.")
+        if get_matter(cid) == "":
+            set_matter(cid, m.text[pos:])
+            fuid = m.from_user.id
+            set_matter_id(cid, fuid)
+            bot.send_message(cid,"El tema actual se ha guardado con éxito, "+m.from_user.first_name+".")
         else:
-            bot.send_message(m.chat.id,"Ya se está debatiendo un \
-            tema, "+m.from_user.first_name+".\n\
-            ~> /end para terminarlo.\n\
-            ~> /current para obtenerlo.")
+            bot.send_message(cid,"Ya se está debatifino un tema, "+m.from_user.first_name+".\n/fin para terminarlo.\n/actual para obtenerlo.")
 ########################################
 
-@bot.message_handler(commands=['current'])
-def command_current(m):
-    actual = get_matter()
+# debate actual
+@bot.message_handler(commands=['actual'])
+def command_actual(m):
+    cid = m.chat.id
+    actual = get_matter(cid)
     if actual != "":
-        bot.send_message(m.chat.id,m.from_user.first_name+", el tema \
-        actual es:\n\" "+actual+" \"\n\
-        ~> /end para terminarlo.")
+        bot.send_message(cid,"\"* "+actual+" *\" es el tema actual.\n\n/fin para terminarlo.",parse_mode="Markdown")
     else:
-        bot.send_message(m.chat.id,"No hay debate \
-        actualmente, "+m.from_user.first_name+".\n\
-        ~> /new para comenzar uno.")
+        bot.send_message(cid,"No hay debate actualmente.\n/nuevo para comenzar uno.")
 ########################################
 
-@bot.message_handler(commands=['end'])
-def command_end(m):
-    if get_matter() != "":
-        uid = get_matter_id()
-        if uid == m.from_user.id:
-            set_matter()
-            bot.send_message(m.chat.id,"Tema cerrado, \
-            "+m.from_user.first_name+".\n~> /new para comenzar uno.")
+# terminar el debate
+@bot.message_handler(commands=['fin'])
+def command_fin(m):
+    cid = m.chat.id
+    if get_matter(cid) != "":
+        uid = get_matter_id(cid)
+        fuid = m.from_user.id
+        if uid == fuid:
+            set_matter(cid)
+            set_matter_id(cid,uid)
+            bot.send_message(cid,"Tema cerrado, "+m.from_user.first_name+".\n/nuevo para comenzar uno.")
         else:
-            bot.send_message(m.chat.id,"No tiene permiso para terminar el \
-            debate, "+m.from_user.first_name+".")
+            bot.send_message(cid,"No tiene permiso para terminar el debate, "+m.from_user.first_name+".")
+
     else:
-        bot.send_message(m.chat.id, "No hay debate \
-        actualmente, "+m.from_user.first_name+".\n\
-        ~> /new para comenzar uno.")
+        bot.send_message(cid, "No hay debate actualmente, "+m.from_user.first_name+".\n/nuevo para comenzar uno.")
 ########################################
 
-@bot.message_handler(commands=['rules'])
-def command_to_rules(m):
-    if m.chat.id < 0:
-        bot.reply_to(m,'https://telegram.me/debate_bot?start=rules')
+REGLASID = ""
+
+# reglas
+@bot.message_handler(commands=['reglas'])
+def command_to_reglas(m):
+    cid = m.chat.id
+    if cid < 0:
+        REGLASID = str(cid)
+        bot.send_message(cid,"Pulse [aquí](https://telegram.me/debate_bot?start=reglas)",parse_mode="Markdown")
     else:
-        command_rules(m)
+        command_reglas(m)
 
-def command_rules(m):
-    normas = get_normas()
-    bot.reply_to(m,"Reglas de participación en este grupo:\n\n"+normas)
+def command_reglas(m):
+    if REGLASID != "":
+        reglas = get_reglas(REGLASID)
+    else:
+        cid = m.chat.id
+        reglas = get_reglas(cid)
+    if reglas != "":
+        bot.reply_to(m,"Reglas de participación en este grupo:\n\n"+reglas)
+    else:
+        bot.reply_to(m,"No hay relgas definidas para este grupo.")
+########################################
 
-################################################################################
+# definir las reglas
+@bot.message_handler(commands=['definereglas'])
+def command_definereglas(m):
+    cid = m.chat.id
+    text = m.text
+    pos = text.find(" ")
+    if pos != -1:
+        txt = m.text[pos+1:]
+        set_reglas(cid, txt)
+    else:
+        txt = ""
+        set_reglas(cid, txt)
+    
+    
+###############################################################################
 #                               functions
-################################################################################
+###############################################################################
 
-##### matter.txt #####
-def set_matter(txt=""):
-    with open('matter.txt','w') as f:
+##### matter #####
+def set_matter(chatid,txt=""):
+    cid = str(chatid)
+    with open("./matter/"+cid+".mat",'w') as f:
         f.write(txt)
 
-def get_matter():
-    with open('matter.txt','r') as f:
+def get_matter(chatid):
+    cid = str(chatid)
+    with open("./matter/"+cid+".mat",'a') as f:
+        pass
+    with open("./matter/"+cid+".mat",'r') as f:
         matter = f.read()
     return matter
 
-##### rules.txt #####
-def get_normas():
-    with open('rules.txt','r') as f:
-        normas = f.read()
-    return normas
+##### reglas #####
+def set_reglas(chatid, txt):
+    cid = str(chatid)
+    with open("./reglas/"+cid+".rul",'w') as f:
+        f.write(txt)
 
-##### currenttopicid.txt #####
-def set_matter_id(m):
-    with open('currenttopicid.txt','w') as f:
-        f.write(str(m.from_user.id))
+def get_reglas(chatid):
+    cid = str(chatid)
+    with open("./reglas/"+cid+".rul",'a') as f:
+        pass
+    with open("./reglas/"+cid+".rul",'r') as f:
+        reglas = f.read()
+    return reglas
 
-def get_matter_id():
-    with open('currenttopicid.txt','r') as f:
+##### matter id #####
+def set_matter_id(chatid,userid):
+    cid = str(chatid)
+    uid = str(userid)
+    with open("./matter/"+cid+".matid",'w') as f:
+        f.write(uid)
+
+def get_matter_id(chatid):
+    cid = str(chatid)
+    with open("./matter/"+cid+".matid",'a') as f:
+        pass
+    with open("./matter/"+cid+".matid",'r') as f:
         uid = f.read()
-    return int(uid)
+    if uid == "":
+        return -1
+    else:
+        return int(uid)
 
-################################################################################
+###############################################################################
 
-bot.polling(none_stop=True, block=False)
-while True: 
-    time.sleep(300)
+bot.polling()
