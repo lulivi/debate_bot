@@ -12,4 +12,4 @@ Este bot simple para telegram puede mantener organizados los debates.<br/>
 
 **Links**
 * El bot en telegram: [@debate_bot](https://telegram.me/debate_bot)<br/>
-* Mi usuario en telegram: [@luvoV](https://telegram.me/luvov)<br/>
+* Mi usuario en telegram: [@O1110000010100100110010010101001](https://telegram.me/O1110000010100100110010010101001)<br/>
